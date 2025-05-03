@@ -15,8 +15,8 @@
         #overlay {
             background: rgba(0, 0, 0, 0.7);
             border: 2px solid #ff00ff;
-            box-shadow: 0 0 20px #ff00ff;
-            text-shadow: 0 0 10px #ff00ff;
+            box-shadow: 0 0 15px #ff00ff;
+            text-shadow: 0 0 8px #ff00ff;
         }
         .glow-button {
             transition: all 0.3s ease;
@@ -24,45 +24,113 @@
         .glow-button:hover {
             box-shadow: 0 0 15px #ff00ff, 0 0 30px #ff0066;
         }
+        .neon-border {
+            border: 1px solid #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center p-6">
-    <h1 class="text-5xl font-bold text-pink-500 mb-4 text-center drop-shadow-lg">JOIminator</h1>
-    <p class="text-lg text-purple-300 mb-6 text-center max-w-md">Unleash your desires with custom jerk off instructions overlaid on any video. Set the pace, feel the rush!</p>
+    <div id="ui-container" class="w-full max-w-md">
+        <h1 class="text-5xl font-bold text-pink-500 mb-4 text-center drop-shadow-lg">JOIminator</h1>
+        <p class="text-lg text-purple-300 mb-6 text-center">Unleash your desires with custom jerk off instructions overlaid on ANY video. Set the pace, feel the rush!</p>
 
-    <div class="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-lg shadow-pink-500/50">
-        <label for="embed-code" class="block text-lg font-semibold text-pink-400 mb-2">Video Embed Code (iframe):</label>
-        <textarea id="embed-code" rows="3" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Paste your iframe embed code here (e.g., from YouTube)"></textarea>
+        <div class="bg-gray-900 p-6 rounded-lg shadow-lg shadow-pink-500/50">
+            <label for="embed-code" class="block text-lg font-semibold text-pink-400 mb-2">Video Embed Code (iframe):</label>
+            <textarea id="embed-code" rows="3" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Paste your iframe embed code here (e.g., from YouTube)"></textarea>
 
-        <label for="instructions-input" class="block text-lg font-semibold text-pink-400 mt-4 mb-2">Instructions (one per line):</label>
-        <textarea id="instructions-input" rows="5" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter instructions here, one per line">Stroke slowly
-Speed up
-Take a break</textarea>
+            <div class="mt-4">
+                <label class="block text-lg font-semibold text-pink-400 mb-2">Duration (seconds per round):</label>
+                <div class="flex space-x-4">
+                    <div class="w-1/2">
+                        <label for="min-duration" class="block text-sm text-purple-300 mb-1">Minimum</label>
+                        <input type="number" id="min-duration" value="15" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    </div>
+                    <div class="w-1/2">
+                        <label for="max-duration" class="block text-sm text-purple-300 mb-1">Maximum</label>
+                        <input type="number" id="max-duration" value="30" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    </div>
+                </div>
+            </div>
 
-        <label for="interval" class="block text-lg font-semibold text-pink-400 mt-4 mb-2">Interval (seconds between rounds):</label>
-        <input type="number" id="interval" value="10" min="1" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500">
+            <div class="mt-4">
+                <label class="block text-lg font-semibold text-pink-400 mb-2">Stroke Amount:</label>
+                <div class="flex space-x-4">
+                    <div class="w-1/2">
+                        <label for="min-strokes" class="block text-sm text-purple-300 mb-1">Minimum</label>
+                        <input type="number" id="min-strokes" value="5" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    </div>
+                    <div class="w-1/2">
+                        <label for="max-strokes" class="block text-sm text-purple-300 mb-1">Maximum</label>
+                        <input type="number" id="max-strokes" value="50" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    </div>
+                </div>
+            </div>
 
-        <label for="duration" class="block text-lg font-semibold text-pink-400 mt-4 mb-2">Duration (seconds per round):</label>
-        <input type="number" id="duration" value="5" min="1" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500">
-
-        <button onclick="startOverlay()" class="mt-6 w-full bg-pink-600 text-white py-3 rounded-lg font-bold text-lg glow-button">Start the Pleasure</button>
+            <button onclick="startOverlay()" class="mt-6 w-full bg-pink-600 text-white py-3 rounded-lg font-bold text-lg glow-button">Start the Pleasure</button>
+        </div>
     </div>
 
+    <button id="back-button" class="hidden fixed top-4 left-4 bg-purple-600 text-white py-2 px-4 rounded-lg font-bold glow-button" onclick="showUI()">Back</button>
     <div id="video-container" class="relative mt-8"></div>
 
     <script>
         let countdownInterval = null;
+        let overlayTimeout = null;
+        const instructions = ["Stroke slowly", "Speed up", "Take a break"]; // Hardcoded instructions
+
+        function getRandomDuration(minDuration, maxDuration) {
+            return (Math.random() * (maxDuration - minDuration) + minDuration) * 1000;
+        }
+
+        function getStrokeCount(instruction, minStrokes, maxStrokes) {
+            instruction = instruction.toLowerCase();
+            if (instruction.includes('break')) {
+                return 0; // No strokes for "break"
+            }
+
+            // Validate stroke range
+            if (minStrokes > maxStrokes) {
+                [minStrokes, maxStrokes] = [maxStrokes, minStrokes]; // Swap if min > max
+            }
+
+            // Adjust stroke range based on instruction
+            let strokeRange = maxStrokes - minStrokes;
+            let adjustedMin, adjustedMax;
+
+            if (instruction.includes('slowly')) {
+                // "Stroke slowly": Lower third of the range
+                adjustedMin = minStrokes;
+                adjustedMax = minStrokes + Math.floor(strokeRange / 3);
+            } else if (instruction.includes('speed up')) {
+                // "Speed up": Upper third of the range
+                adjustedMin = maxStrokes - Math.floor(strokeRange / 3);
+                adjustedMax = maxStrokes;
+            } else {
+                // Others: Middle third of the range
+                adjustedMin = minStrokes + Math.floor(strokeRange / 3);
+                adjustedMax = maxStrokes - Math.floor(strokeRange / 3);
+            }
+
+            return Math.floor(Math.random() * (adjustedMax - adjustedMin + 1)) + adjustedMin;
+        }
 
         function startOverlay() {
-            // Clear any existing countdown
+            // Clear any existing intervals
             if (countdownInterval) clearInterval(countdownInterval);
+            if (overlayTimeout) clearTimeout(overlayTimeout);
 
             // Get user inputs
             let embedCode = document.getElementById('embed-code').value;
-            let instructionsText = document.getElementById('instructions-input').value;
-            let instructions = instructionsText.split('\n').filter(line => line.trim() !== '');
-            let interval = parseInt(document.getElementById('interval').value) * 1000;
-            let duration = parseInt(document.getElementById('duration').value) * 1000;
+            let minDuration = parseInt(document.getElementById('min-duration').value);
+            let maxDuration = parseInt(document.getElementById('max-duration').value);
+            let minStrokes = parseInt(document.getElementById('min-strokes').value);
+            let maxStrokes = parseInt(document.getElementById('max-strokes').value);
+
+            // Validate durations
+            if (minDuration > maxDuration) {
+                [minDuration, maxDuration] = [maxDuration, minDuration]; // Swap if min > max
+            }
 
             // Parse embed code to adjust container size
             let tempDiv = document.createElement('div');
@@ -76,38 +144,55 @@ Take a break</textarea>
             }
 
             // Embed video and overlay
-            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 rounded-lg text-center text-2xl text-white hidden"></div>';
+            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="absolute bottom-4 right-4 p-3 rounded-lg text-lg text-white max-w-xs text-center"></div>';
+
+            // Hide UI and show back button
+            document.getElementById('ui-container').classList.add('hidden');
+            document.getElementById('back-button').classList.remove('hidden');
 
             // Start overlay cycle
-            setInterval(function() {
+            function showNextOverlay() {
                 if (instructions.length > 0) {
                     let randomIndex = Math.floor(Math.random() * instructions.length);
-                    let strokeCount = Math.floor(Math.random() * 41) + 10; // Random strokes between 10 and 50
+                    let instruction = instructions[randomIndex];
+                    let strokeCount = getStrokeCount(instruction, minStrokes, maxStrokes);
+                    let duration = getRandomDuration(minDuration, maxDuration);
                     let overlay = document.getElementById('overlay');
-                    let remainingSeconds = duration / 1000;
+                    let remainingSeconds = Math.round(duration / 1000);
 
-                    // Display instruction, stroke count, and initial countdown
-                    overlay.innerHTML = `${instructions[randomIndex]}<br><span class="text-pink-400">Stroke ${strokeCount} times in ${remainingSeconds} seconds!</span>`;
+                    // Display instruction, stroke count, and countdown in two lines
+                    overlay.innerHTML = strokeCount > 0
+                        ? `${strokeCount} strokes<br><span class="text-pink-400">${remainingSeconds}</span>`
+                        : `${instruction}<br><span class="text-pink-400">${remainingSeconds}</span>`;
                     overlay.style.display = 'block';
 
                     // Start countdown
+                    if (countdownInterval) clearInterval(countdownInterval);
                     countdownInterval = setInterval(function() {
                         remainingSeconds--;
                         if (remainingSeconds >= 0) {
-                            overlay.innerHTML = `${instructions[randomIndex]}<br><span class="text-pink-400">Stroke ${strokeCount} times in ${remainingSeconds} seconds!</span>`;
-                        } else {
-                            clearInterval(countdownInterval);
-                            overlay.style.display = 'none';
+                            overlay.innerHTML = strokeCount > 0
+                                ? `${strokeCount} strokes<br><span class="text-pink-400">${remainingSeconds}</span>`
+                                : `${instruction}<br><span class="text-pink-400">${remainingSeconds}</span>`;
                         }
                     }, 1000);
 
-                    // Hide overlay after duration
-                    setTimeout(function() {
-                        clearInterval(countdownInterval);
-                        overlay.style.display = 'none';
-                    }, duration);
+                    // Schedule next overlay immediately after this one ends
+                    overlayTimeout = setTimeout(showNextOverlay, duration);
                 }
-            }, interval);
+            }
+
+            // Start first overlay
+            showNextOverlay();
+        }
+
+        function showUI() {
+            // Clear intervals and reset UI
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (overlayTimeout) clearTimeout(overlayTimeout);
+            document.getElementById('ui-container').classList.remove('hidden');
+            document.getElementById('back-button').classList.add('hidden');
+            document.getElementById('video-container').innerHTML = '';
         }
     </script>
 </body>
