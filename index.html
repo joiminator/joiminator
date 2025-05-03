@@ -34,7 +34,7 @@
             justify-content: center;
             align-items: center;
             font-size: 6.5rem;
-            line-height: 5rem; /* Keep your adjusted line-height */
+            line-height: 5rem;
         }
         .overlay-large .seconds {
             font-size: 3.5rem;
@@ -45,10 +45,64 @@
             right: 2rem;
             max-width: 16rem;
             font-size: 1.125rem;
-            display: flex; /* Add flexbox for content centering */
-            flex-direction: column; /* Stack content vertically */
-            justify-content: center; /* Center content vertically */
-            align-items: center; /* Center content horizontally */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Adjust overlay for full-screen mode */
+        #video-container:fullscreen .overlay-large {
+            top: 20vh;
+            left: 20vw;
+            width: 60vw;
+            height: 60vh;
+            font-size: 10vw; /* Scales with viewport width */
+            line-height: 8vw;
+        }
+        #video-container:fullscreen .overlay-large .seconds {
+            font-size: 5vw;
+        }
+        #video-container:fullscreen .overlay-normal {
+            bottom: 4vh;
+            right: 2vw;
+            max-width: 20vw;
+            font-size: 1.5vw;
+        }
+        /* For Webkit browsers (Chrome, Safari) */
+        #video-container:-webkit-full-screen .overlay-large {
+            top: 20vh;
+            left: 20vw;
+            width: 60vw;
+            height: 60vh;
+            font-size: 10vw;
+            line-height: 8vw;
+        }
+        #video-container:-webkit-full-screen .overlay-large .seconds {
+            font-size: 5vw;
+        }
+        #video-container:-webkit-full-screen .overlay-normal {
+            bottom: 4vh;
+            right: 2vw;
+            max-width: 20vw;
+            font-size: 1.5vw;
+        }
+        /* For Firefox */
+        #video-container:-moz-full-screen .overlay-large {
+            top: 20vh;
+            left: 20vw;
+            width: 60vw;
+            height: 60vh;
+            font-size: 10vw;
+            line-height: 8vw;
+        }
+        #video-container:-moz-full-screen .overlay-large .seconds {
+            font-size: 5vw;
+        }
+        #video-container:-moz-full-screen .overlay-normal {
+            bottom: 4vh;
+            right: 2vw;
+            max-width: 20vw;
+            font-size: 1.5vw;
         }
         .glow-button {
             transition: all 0.3s ease;
@@ -139,7 +193,10 @@
         </div>
     </div>
 
-    <button id="back-button" class="hidden fixed top-4 left-4 bg-purple-600 text-white py-2 px-4 rounded-lg font-bold glow-button" onclick="showUI()">Back</button>
+    <div class="fixed top-4 flex space-x-4">
+        <button id="back-button" class="hidden bg-purple-600 text-white py-2 px-4 rounded-lg font-bold glow-button" onclick="showUI()">Back</button>
+        <button id="fullscreen-button" class="hidden bg-purple-600 text-white py-2 px-4 rounded-lg font-bold glow-button" onclick="toggleFullScreen()">Full Screen</button>
+    </div>
     <div id="video-container" class="relative mt-8"></div>
 
     <script>
@@ -157,6 +214,29 @@
                 valueDisplay.textContent = slider.value;
             });
         });
+
+        function toggleFullScreen() {
+            const videoContainer = document.getElementById('video-container');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
+                if (videoContainer.requestFullscreen) {
+                    videoContainer.requestFullscreen();
+                } else if (videoContainer.webkitRequestFullscreen) { /* Safari */
+                    videoContainer.webkitRequestFullscreen();
+                } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
+                    videoContainer.mozRequestFullScreen();
+                }
+                document.getElementById('fullscreen-button').textContent = 'Exit Full Screen';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                    document.mozCancelFullScreen();
+                }
+                document.getElementById('fullscreen-button').textContent = 'Full Screen';
+            }
+        }
 
         function getRandomDuration(minDuration, maxDuration) {
             return (Math.random() * (maxDuration - minDuration) + minDuration) * 1000;
@@ -208,6 +288,37 @@
             return weights.length - 1; // Fallback
         }
 
+        function showPrepareOverlay(callback) {
+            const prepareDuration = 25000; // 25 seconds in milliseconds
+            let remainingSeconds = Math.round(prepareDuration / 1000);
+            let overlay = document.getElementById('overlay');
+
+            // Initially show overlay in large mode
+            overlay.className = 'overlay-large';
+            overlay.innerHTML = `<br>Prepare:<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
+            overlay.style.display = 'block';
+
+            // After 1 second, switch to normal size
+            sizeTimeout = setTimeout(() => {
+                overlay.className = 'overlay-normal';
+            }, 1000);
+
+            // Start countdown
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(function() {
+                remainingSeconds--;
+                if (remainingSeconds >= 0) {
+                    overlay.innerHTML = `<br>Prepare:<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
+                }
+            }, 1000);
+
+            // After prepare time, proceed to the main overlay cycle
+            overlayTimeout = setTimeout(() => {
+                if (countdownInterval) clearInterval(countdownInterval);
+                callback();
+            }, prepareDuration);
+        }
+
         function startOverlay() {
             // Clear any existing intervals and timeouts
             if (countdownInterval) clearInterval(countdownInterval);
@@ -244,11 +355,15 @@
             // Embed video and overlay
             document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="text-white text-center"></div>';
 
-            // Hide UI and show back button
+            // Hide UI and show back and fullscreen buttons
             document.getElementById('ui-container').classList.add('hidden');
             document.getElementById('back-button').classList.remove('hidden');
+            document.getElementById('fullscreen-button').classList.remove('hidden');
 
-            // Start overlay cycle
+            // Start with prepare overlay, then proceed to main overlay cycle
+            showPrepareOverlay(showNextOverlay);
+
+            // Main overlay cycle
             function showNextOverlay() {
                 if (instructions.length > 0) {
                     let randomIndex = weightedRandomChoice(weights);
@@ -276,8 +391,8 @@
                         remainingSeconds--;
                         if (remainingSeconds >= 0) {
                             overlay.innerHTML = strokeCount > 0
-                                ? `${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`
-                                : `${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
+                                ? `<br>${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`
+                                : `<br>${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                         }
                     }, 1000);
 
@@ -285,9 +400,6 @@
                     overlayTimeout = setTimeout(showNextOverlay, duration);
                 }
             }
-
-            // Start first overlay
-            showNextOverlay();
         }
 
         function showUI() {
@@ -297,7 +409,19 @@
             if (sizeTimeout) clearTimeout(sizeTimeout);
             document.getElementById('ui-container').classList.remove('hidden');
             document.getElementById('back-button').classList.add('hidden');
+            document.getElementById('fullscreen-button').classList.add('hidden');
+            document.getElementById('fullscreen-button').textContent = 'Full Screen'; // Reset button text
             document.getElementById('video-container').innerHTML = '';
+            // Exit full-screen if active
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                }
+            }
         }
     </script>
 </body>
