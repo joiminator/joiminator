@@ -17,6 +17,38 @@
             border: 2px solid #ff00ff;
             box-shadow: 0 0 15px #ff00ff;
             text-shadow: 0 0 8px #ff00ff;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .overlay-large {
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 60%;
+            height: 60%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 6.5rem;
+            line-height: 5rem; /* Keep your adjusted line-height */
+        }
+        .overlay-large .seconds {
+            font-size: 3.5rem;
+        }
+        .overlay-normal {
+            position: absolute;
+            bottom: 4rem;
+            right: 2rem;
+            max-width: 16rem;
+            font-size: 1.125rem;
+            display: flex; /* Add flexbox for content centering */
+            flex-direction: column; /* Stack content vertically */
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center content horizontally */
         }
         .glow-button {
             transition: all 0.3s ease;
@@ -26,6 +58,24 @@
         }
         .neon-border {
             border: 1px solid #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff00ff;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #ff00ff;
+            cursor: pointer;
+            border-radius: 50%;
             box-shadow: 0 0 10px #ff00ff;
         }
     </style>
@@ -44,11 +94,11 @@
                 <div class="flex space-x-4">
                     <div class="w-1/2">
                         <label for="min-duration" class="block text-sm text-purple-300 mb-1">Minimum</label>
-                        <input type="number" id="min-duration" value="15" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        <input type="number" id="min-duration" value="10" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
                     </div>
                     <div class="w-1/2">
                         <label for="max-duration" class="block text-sm text-purple-300 mb-1">Maximum</label>
-                        <input type="number" id="max-duration" value="30" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        <input type="number" id="max-duration" value="10" min="1" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500">
                     </div>
                 </div>
             </div>
@@ -67,6 +117,24 @@
                 </div>
             </div>
 
+            <div class="mt-4">
+                <label class="block text-lg font-semibold text-pink-400 mb-2">Instruction Likelihood (%):</label>
+                <div class="space-y-4">
+                    <div>
+                        <label for="slow-likelihood" class="block text-sm text-purple-300 mb-1">Slow: <span id="slow-likelihood-value">20</span>%</label>
+                        <input type="range" id="slow-likelihood" min="0" max="100" value="20" class="w-full">
+                    </div>
+                    <div>
+                        <label for="fast-likelihood" class="block text-sm text-purple-300 mb-1">Fast: <span id="fast-likelihood-value">70</span>%</label>
+                        <input type="range" id="fast-likelihood" min="0" max="100" value="70" class="w-full">
+                    </div>
+                    <div>
+                        <label for="break-likelihood" class="block text-sm text-purple-300 mb-1">Break: <span id="break-likelihood-value">10</span>%</label>
+                        <input type="range" id="break-likelihood" min="0" max="100" value="10" class="w-full">
+                    </div>
+                </div>
+            </div>
+
             <button onclick="startOverlay()" class="mt-6 w-full bg-pink-600 text-white py-3 rounded-lg font-bold text-lg glow-button">Start the Pleasure</button>
         </div>
     </div>
@@ -77,7 +145,18 @@
     <script>
         let countdownInterval = null;
         let overlayTimeout = null;
+        let sizeTimeout = null;
         const instructions = ["Stroke slowly", "Speed up", "Take a break"]; // Hardcoded instructions
+
+        // Update slider value display
+        const sliders = ['slow', 'fast', 'break'];
+        sliders.forEach(type => {
+            const slider = document.getElementById(`${type}-likelihood`);
+            const valueDisplay = document.getElementById(`${type}-likelihood-value`);
+            slider.addEventListener('input', () => {
+                valueDisplay.textContent = slider.value;
+            });
+        });
 
         function getRandomDuration(minDuration, maxDuration) {
             return (Math.random() * (maxDuration - minDuration) + minDuration) * 1000;
@@ -112,13 +191,28 @@
                 adjustedMax = maxStrokes - Math.floor(strokeRange / 3);
             }
 
-            return Math.floor(Math.random() * (adjustedMax - adjustedMin + 1)) + adjustedMin;
+            let strokeCount = Math.floor(Math.random() * (adjustedMax - adjustedMin + 1)) + adjustedMin;
+            return Math.round(strokeCount / 5) * 5; // Round to nearest multiple of 5
+        }
+
+        function weightedRandomChoice(weights) {
+            const total = weights.reduce((sum, weight) => sum + weight, 0);
+            if (total === 0) return Math.floor(Math.random() * instructions.length); // Default to equal probability if all weights are 0
+
+            const rand = Math.random() * total;
+            let cumulative = 0;
+            for (let i = 0; i < weights.length; i++) {
+                cumulative += weights[i];
+                if (rand <= cumulative) return i;
+            }
+            return weights.length - 1; // Fallback
         }
 
         function startOverlay() {
-            // Clear any existing intervals
+            // Clear any existing intervals and timeouts
             if (countdownInterval) clearInterval(countdownInterval);
             if (overlayTimeout) clearTimeout(overlayTimeout);
+            if (sizeTimeout) clearTimeout(sizeTimeout);
 
             // Get user inputs
             let embedCode = document.getElementById('embed-code').value;
@@ -126,6 +220,10 @@
             let maxDuration = parseInt(document.getElementById('max-duration').value);
             let minStrokes = parseInt(document.getElementById('min-strokes').value);
             let maxStrokes = parseInt(document.getElementById('max-strokes').value);
+            let slowLikelihood = parseInt(document.getElementById('slow-likelihood').value);
+            let fastLikelihood = parseInt(document.getElementById('fast-likelihood').value);
+            let breakLikelihood = parseInt(document.getElementById('break-likelihood').value);
+            let weights = [slowLikelihood, fastLikelihood, breakLikelihood];
 
             // Validate durations
             if (minDuration > maxDuration) {
@@ -144,7 +242,7 @@
             }
 
             // Embed video and overlay
-            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="absolute bottom-4 right-4 p-3 rounded-lg text-lg text-white max-w-xs text-center"></div>';
+            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="text-white text-center"></div>';
 
             // Hide UI and show back button
             document.getElementById('ui-container').classList.add('hidden');
@@ -153,18 +251,24 @@
             // Start overlay cycle
             function showNextOverlay() {
                 if (instructions.length > 0) {
-                    let randomIndex = Math.floor(Math.random() * instructions.length);
+                    let randomIndex = weightedRandomChoice(weights);
                     let instruction = instructions[randomIndex];
                     let strokeCount = getStrokeCount(instruction, minStrokes, maxStrokes);
                     let duration = getRandomDuration(minDuration, maxDuration);
                     let overlay = document.getElementById('overlay');
                     let remainingSeconds = Math.round(duration / 1000);
 
-                    // Display instruction, stroke count, and countdown in two lines
+                    // Initially show overlay in large mode
+                    overlay.className = 'overlay-large';
                     overlay.innerHTML = strokeCount > 0
-                        ? `${strokeCount} strokes<br><span class="text-pink-400">${remainingSeconds}</span>`
-                        : `${instruction}<br><span class="text-pink-400">${remainingSeconds}</span>`;
+                        ? `<br>${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`
+                        : `<br>${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
                     overlay.style.display = 'block';
+
+                    // After 1 second, switch to normal size
+                    sizeTimeout = setTimeout(() => {
+                        overlay.className = 'overlay-normal';
+                    }, 1000);
 
                     // Start countdown
                     if (countdownInterval) clearInterval(countdownInterval);
@@ -172,8 +276,8 @@
                         remainingSeconds--;
                         if (remainingSeconds >= 0) {
                             overlay.innerHTML = strokeCount > 0
-                                ? `${strokeCount} strokes<br><span class="text-pink-400">${remainingSeconds}</span>`
-                                : `${instruction}<br><span class="text-pink-400">${remainingSeconds}</span>`;
+                                ? `${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`
+                                : `${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                         }
                     }, 1000);
 
@@ -190,6 +294,7 @@
             // Clear intervals and reset UI
             if (countdownInterval) clearInterval(countdownInterval);
             if (overlayTimeout) clearTimeout(overlayTimeout);
+            if (sizeTimeout) clearTimeout(sizeTimeout);
             document.getElementById('ui-container').classList.remove('hidden');
             document.getElementById('back-button').classList.add('hidden');
             document.getElementById('video-container').innerHTML = '';
