@@ -219,6 +219,19 @@
         let sizeTimeout = null;
         const instructions = ["Stroke slowly", "Speed up", "Take a break"]; // Hardcoded instructions
 
+        // Load embed code from sessionStorage on page load
+        window.onload = function() {
+            const storedEmbedCode = sessionStorage.getItem('embedCode');
+            if (storedEmbedCode) {
+                document.getElementById('embed-code').value = storedEmbedCode;
+            }
+        };
+
+        // Function to save embed code to sessionStorage
+        function saveEmbedCode(embedCode) {
+            sessionStorage.setItem('embedCode', embedCode);
+        }
+
         // Update slider value display
         const sliders = ['slow', 'fast', 'break'];
         sliders.forEach(type => {
@@ -322,7 +335,7 @@
             countdownInterval = setInterval(function() {
                 remainingSeconds--;
                 if (remainingSeconds >= 0) {
-                    overlay.innerHTML = `<br>Prepare<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
+                    overlay.innerHTML = `Prepare<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                 }
             }, 1000);
 
@@ -354,6 +367,9 @@
             if (minDuration > maxDuration) {
                 [minDuration, maxDuration] = [maxDuration, minDuration]; // Swap if min > max
             }
+
+            // Save embed code to sessionStorage
+            saveEmbedCode(embedCode);
 
             // Parse embed code and modify iframe attributes
             let tempDiv = document.createElement('div');
@@ -410,8 +426,8 @@
                         remainingSeconds--;
                         if (remainingSeconds >= 0) {
                             overlay.innerHTML = strokeCount > 0
-                                ? `<br>${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`
-                                : `<br>${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
+                                ? `${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`
+                                : `${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                         }
                     }, 1000);
 
