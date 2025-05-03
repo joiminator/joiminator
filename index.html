@@ -12,6 +12,20 @@
             min-height: 100vh;
             color: white;
         }
+        #video-container {
+            margin-top: 60px;
+            position: relative;
+            width: 80%;
+            aspect-ratio: 16 / 9; /* Maintain aspect ratio */
+            overflow: hidden; /* Prevent content from overflowing */
+        }
+        #video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
         #overlay {
             background: rgba(0, 0, 0, 0.7);
             border: 2px solid #ff00ff;
@@ -56,7 +70,7 @@
             left: 20vw;
             width: 60vw;
             height: 60vh;
-            font-size: 10vw; /* Scales with viewport width */
+            font-size: 10vw;
             line-height: 8vw;
         }
         #video-container:fullscreen .overlay-large .seconds {
@@ -295,7 +309,7 @@
 
             // Initially show overlay in large mode
             overlay.className = 'overlay-large';
-            overlay.innerHTML = `<br>Prepare:<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
+            overlay.innerHTML = `<br>Prepare<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
             overlay.style.display = 'block';
 
             // After 1 second, switch to normal size
@@ -308,7 +322,7 @@
             countdownInterval = setInterval(function() {
                 remainingSeconds--;
                 if (remainingSeconds >= 0) {
-                    overlay.innerHTML = `<br>Prepare:<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
+                    overlay.innerHTML = `<br>Prepare<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                 }
             }, 1000);
 
@@ -341,19 +355,24 @@
                 [minDuration, maxDuration] = [maxDuration, minDuration]; // Swap if min > max
             }
 
-            // Parse embed code to adjust container size
+            // Parse embed code and modify iframe attributes
             let tempDiv = document.createElement('div');
             tempDiv.innerHTML = embedCode;
             let iframe = tempDiv.querySelector('iframe');
             if (iframe) {
-                let width = iframe.getAttribute('width') || '640';
-                let height = iframe.getAttribute('height') || '360';
-                document.getElementById('video-container').style.width = width + 'px';
-                document.getElementById('video-container').style.height = height + 'px';
+                iframe.setAttribute('width', '100%');
+                iframe.setAttribute('height', '100%');
+                // Ensure allowfullscreen attribute is present for full-screen support
+                if (iframe.hasAttribute('allowfullscreen')) {
+                    iframe.removeAttribute('allowfullscreen', '');
+                }
+            } else {
+                alert('Please provide a valid iframe embed code.');
+                return;
             }
 
-            // Embed video and overlay
-            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="text-white text-center"></div>';
+            // Embed modified iframe and overlay
+            document.getElementById('video-container').innerHTML = iframe.outerHTML + '<div id="overlay" class="text-white text-center"></div>';
 
             // Hide UI and show back and fullscreen buttons
             document.getElementById('ui-container').classList.add('hidden');
