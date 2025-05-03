@@ -2,6 +2,10 @@
 
 JOIminator is a web-based tool that lets you overlay customizable jerk off instructions on any embedded video. With user-defined instructions, adjustable timing, and randomized display, JOIminator transforms your video-watching experience into something uniquely tailored. Perfect for personal use with a simple, intuitive interface.
 
+## Live Version
+
+https://joiminator.github.io/joiminator/
+
 ## Features
 
 - **Universal Video Embedding**: Embed videos from platforms like YouTube, Vimeo, or others using iframe embed codes.
