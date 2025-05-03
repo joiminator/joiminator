@@ -1,80 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>JOIminator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOIminator - Ultimate Pleasure Control</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        #video-container {
-            position: relative;
-            width: 640px;
-            height: 360px;
-            margin-top: 20px;
+        body {
+            background: linear-gradient(135deg, #1a0033, #330066);
+            min-height: 100vh;
+            color: white;
         }
         #overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 10px;
-            font-size: 18px;
-            display: none;
-            z-index: 10;
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 20px #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
         }
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        .glow-button {
+            transition: all 0.3s ease;
         }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        textarea, input {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 5px;
-        }
-        button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
+        .glow-button:hover {
+            box-shadow: 0 0 15px #ff00ff, 0 0 30px #ff0066;
         }
     </style>
 </head>
-<body>
-    <h1>JOIminator</h1>
-    <p>Add jerk off instructions as an overlay on any embedded video. Customize timing and randomness below!</p>
+<body class="flex flex-col items-center p-6">
+    <h1 class="text-5xl font-bold text-pink-500 mb-4 text-center drop-shadow-lg">JOIminator</h1>
+    <p class="text-lg text-purple-300 mb-6 text-center max-w-md">Unleash your desires with custom jerk off instructions overlaid on any video. Set the pace, feel the rush!</p>
 
-    <label for="embed-code">Video Embed Code (iframe):</label>
-    <textarea id="embed-code" rows="3" placeholder="Paste your iframe embed code here (e.g., from YouTube)"></textarea>
+    <div class="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-lg shadow-pink-500/50">
+        <label for="embed-code" class="block text-lg font-semibold text-pink-400 mb-2">Video Embed Code (iframe):</label>
+        <textarea id="embed-code" rows="3" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Paste your iframe embed code here (e.g., from YouTube)"></textarea>
 
-    <label for="instructions-input">Instructions (one per line):</label>
-    <textarea id="instructions-input" rows="5" placeholder="Enter instructions here, one per line">Stroke slowly
+        <label for="instructions-input" class="block text-lg font-semibold text-pink-400 mt-4 mb-2">Instructions (one per line):</label>
+        <textarea id="instructions-input" rows="5" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Enter instructions here, one per line">Stroke slowly
 Speed up
 Take a break</textarea>
 
-    <label for="interval">Interval (seconds between overlays):</label>
-    <input type="number" id="interval" value="10" min="1">
+        <label for="interval" class="block text-lg font-semibold text-pink-400 mt-4 mb-2">Interval (seconds between rounds):</label>
+        <input type="number" id="interval" value="10" min="1" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500">
 
-    <label for="duration">Duration (seconds each overlay shows):</label>
-    <input type="number" id="duration" value="5" min="1">
+        <label for="duration" class="block text-lg font-semibold text-pink-400 mt-4 mb-2">Duration (seconds per round):</label>
+        <input type="number" id="duration" value="5" min="1" class="w-full bg-gray-800 text-white p-3 rounded border border-purple-500 focus:outline-none focus:ring-2 focus:ring-pink-500">
 
-    <button onclick="startOverlay()">Start</button>
+        <button onclick="startOverlay()" class="mt-6 w-full bg-pink-600 text-white py-3 rounded-lg font-bold text-lg glow-button">Start the Pleasure</button>
+    </div>
 
-    <div id="video-container"></div>
+    <div id="video-container" class="relative mt-8"></div>
 
     <script>
+        let countdownInterval = null;
+
         function startOverlay() {
+            // Clear any existing countdown
+            if (countdownInterval) clearInterval(countdownInterval);
+
             // Get user inputs
             let embedCode = document.getElementById('embed-code').value;
             let instructionsText = document.getElementById('instructions-input').value;
@@ -94,16 +76,34 @@ Take a break</textarea>
             }
 
             // Embed video and overlay
-            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay"></div>';
+            document.getElementById('video-container').innerHTML = embedCode + '<div id="overlay" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 rounded-lg text-center text-2xl text-white hidden"></div>';
 
             // Start overlay cycle
             setInterval(function() {
                 if (instructions.length > 0) {
                     let randomIndex = Math.floor(Math.random() * instructions.length);
+                    let strokeCount = Math.floor(Math.random() * 41) + 10; // Random strokes between 10 and 50
                     let overlay = document.getElementById('overlay');
-                    overlay.innerText = instructions[randomIndex];
+                    let remainingSeconds = duration / 1000;
+
+                    // Display instruction, stroke count, and initial countdown
+                    overlay.innerHTML = `${instructions[randomIndex]}<br><span class="text-pink-400">Stroke ${strokeCount} times in ${remainingSeconds} seconds!</span>`;
                     overlay.style.display = 'block';
+
+                    // Start countdown
+                    countdownInterval = setInterval(function() {
+                        remainingSeconds--;
+                        if (remainingSeconds >= 0) {
+                            overlay.innerHTML = `${instructions[randomIndex]}<br><span class="text-pink-400">Stroke ${strokeCount} times in ${remainingSeconds} seconds!</span>`;
+                        } else {
+                            clearInterval(countdownInterval);
+                            overlay.style.display = 'none';
+                        }
+                    }, 1000);
+
+                    // Hide overlay after duration
                     setTimeout(function() {
+                        clearInterval(countdownInterval);
                         overlay.style.display = 'none';
                     }, duration);
                 }
