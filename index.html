@@ -9,9 +9,10 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-    
       gtag('config', 'G-T5KBPH3QHT');
     </script>
+    <!-- AddToAny CDN -->
+    <script async src="https://static.addtoany.com/menu/page.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -23,8 +24,8 @@
             margin-top: 60px;
             position: relative;
             width: 80%;
-            aspect-ratio: 16 / 9; /* Maintain aspect ratio */
-            overflow: hidden; /* Prevent content from overflowing */
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
         }
         #video-container iframe {
             position: absolute;
@@ -71,7 +72,6 @@
             justify-content: center;
             align-items: center;
         }
-        /* Adjust overlay for full-screen mode */
         #video-container:fullscreen .overlay-large {
             top: 20vh;
             left: 20vw;
@@ -89,7 +89,6 @@
             max-width: 20vw;
             font-size: 1.5vw;
         }
-        /* For Webkit browsers (Chrome, Safari) */
         #video-container:-webkit-full-screen .overlay-large {
             top: 20vh;
             left: 20vw;
@@ -107,7 +106,6 @@
             max-width: 20vw;
             font-size: 1.5vw;
         }
-        /* For Firefox */
         #video-container:-moz-full-screen .overlay-large {
             top: 20vh;
             left: 20vw;
@@ -152,6 +150,22 @@
             cursor: pointer;
             border-radius: 50%;
             box-shadow: 0 0 10px #ff00ff;
+        }
+        /* Style AddToAny buttons to match the theme */
+        .a2a_kit {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .a2a_button {
+            background-color: #6b21a8 !important;
+            border-radius: 0.5rem !important;
+            padding: 0.5rem !important;
+            transition: all 0.3s ease !important;
+        }
+        .a2a_button:hover {
+            box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff0066 !important;
         }
     </style>
 </head>
@@ -211,6 +225,17 @@
             </div>
 
             <button onclick="startOverlay()" class="mt-6 w-full bg-pink-600 text-white py-3 rounded-lg font-bold text-lg glow-button">Start the Pleasure</button>
+            <!-- AddToAny Share Buttons -->
+            <div class="mt-4">
+                <label class="block text-lg font-semibold text-pink-400 mb-2">Share JOIminator</label>
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style" id="share-toolbox">
+                    <a class="a2a_button_twitter a2a_button"></a>
+                    <a class="a2a_button_facebook a2a_button"></a>
+                    <a class="a2a_button_whatsapp a2a_button"></a>
+                    <a class="a2a_button_email a2a_button"></a>
+                    <a class="a2a_dd a2a_button" href="https://www.addtoany.com/share"></a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -224,19 +249,58 @@
         let countdownInterval = null;
         let overlayTimeout = null;
         let sizeTimeout = null;
-        const instructions = ["Stroke slowly", "Speed up", "Take a break"]; // Hardcoded instructions
+        const instructions = ["Stroke slowly", "Speed up", "Take a break"];
 
-        // Load embed code from sessionStorage on page load
+        // Load embed code from sessionStorage or query parameter on page load
         window.onload = function() {
-            const storedEmbedCode = sessionStorage.getItem('embedCode');
-            if (storedEmbedCode) {
-                document.getElementById('embed-code').value = storedEmbedCode;
+            // Check for embed code in query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const embedFromUrl = urlParams.get('embed');
+            if (embedFromUrl) {
+                const decodedEmbed = decodeURIComponent(embedFromUrl);
+                document.getElementById('embed-code').value = decodedEmbed;
+                sessionStorage.setItem('embedCode', decodedEmbed);
+            } else {
+                // Fallback to sessionStorage
+                const storedEmbedCode = sessionStorage.getItem('embedCode');
+                if (storedEmbedCode) {
+                    document.getElementById('embed-code').value = storedEmbedCode;
+                }
             }
+
+            // Update AddToAny share URL dynamically
+            updateShareUrl();
         };
 
         // Function to save embed code to sessionStorage
         function saveEmbedCode(embedCode) {
             sessionStorage.setItem('embedCode', embedCode);
+            updateShareUrl(); // Update share URL whenever embed code changes
+        }
+
+        // Function to update AddToAny share URL
+        function updateShareUrl() {
+            const embedCode = document.getElementById('embed-code').value;
+            let shareUrl = window.location.origin + window.location.pathname;
+            
+            // Add embed code to the URL as a query parameter if it exists
+            if (embedCode) {
+                const encodedEmbed = encodeURIComponent(embedCode);
+                shareUrl += `?embed=${encodedEmbed}`;
+            }
+
+            // Use static shareUrl for now
+            shareUrl = 'https://joiminator.github.io/joiminator/';
+
+            // Update AddToAny share URL and title
+            const shareToolbox = document.getElementById('share-toolbox');
+            shareToolbox.setAttribute('data-a2a-url', shareUrl);
+            shareToolbox.setAttribute('data-a2a-title', 'Check out JOIminator! Add jerk-off instructions to any video 🎥💦');
+
+            // Refresh AddToAny to apply the new URL
+            if (typeof a2a !== 'undefined') {
+                a2a.init('page');
+            }
         }
 
         // Update slider value display
@@ -249,23 +313,28 @@
             });
         });
 
+        // Add event listener to update share URL when embed code changes
+        document.getElementById('embed-code').addEventListener('input', () => {
+            updateShareUrl();
+        });
+
         function toggleFullScreen() {
             const videoContainer = document.getElementById('video-container');
             if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
                 if (videoContainer.requestFullscreen) {
                     videoContainer.requestFullscreen();
-                } else if (videoContainer.webkitRequestFullscreen) { /* Safari */
+                } else if (videoContainer.webkitRequestFullscreen) {
                     videoContainer.webkitRequestFullscreen();
-                } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
+                } else if (videoContainer.mozRequestFullScreen) {
                     videoContainer.mozRequestFullScreen();
                 }
                 document.getElementById('fullscreen-button').textContent = 'Exit Full Screen';
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
+                } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) { /* Firefox */
+                } else if (document.mozCancelFullScreen) {
                     document.mozCancelFullScreen();
                 }
                 document.getElementById('fullscreen-button').textContent = 'Full Screen';
@@ -279,65 +348,49 @@
         function getStrokeCount(instruction, minStrokes, maxStrokes) {
             instruction = instruction.toLowerCase();
             if (instruction.includes('break')) {
-                return 0; // No strokes for "break"
+                return 0;
             }
-
-            // Validate stroke range
             if (minStrokes > maxStrokes) {
-                [minStrokes, maxStrokes] = [maxStrokes, minStrokes]; // Swap if min > max
+                [minStrokes, maxStrokes] = [maxStrokes, minStrokes];
             }
-
-            // Adjust stroke range based on instruction
             let strokeRange = maxStrokes - minStrokes;
             let adjustedMin, adjustedMax;
-
             if (instruction.includes('slowly')) {
-                // "Stroke slowly": Lower third of the range
                 adjustedMin = minStrokes;
                 adjustedMax = minStrokes + Math.floor(strokeRange / 3);
             } else if (instruction.includes('speed up')) {
-                // "Speed up": Upper third of the range
                 adjustedMin = maxStrokes - Math.floor(strokeRange / 3);
                 adjustedMax = maxStrokes;
             } else {
-                // Others: Middle third of the range
                 adjustedMin = minStrokes + Math.floor(strokeRange / 3);
                 adjustedMax = maxStrokes - Math.floor(strokeRange / 3);
             }
-
             let strokeCount = Math.floor(Math.random() * (adjustedMax - adjustedMin + 1)) + adjustedMin;
-            return Math.round(strokeCount / 5) * 5; // Round to nearest multiple of 5
+            return Math.round(strokeCount / 5) * 5;
         }
 
         function weightedRandomChoice(weights) {
             const total = weights.reduce((sum, weight) => sum + weight, 0);
-            if (total === 0) return Math.floor(Math.random() * instructions.length); // Default to equal probability if all weights are 0
-
+            if (total === 0) return Math.floor(Math.random() * instructions.length);
             const rand = Math.random() * total;
             let cumulative = 0;
             for (let i = 0; i < weights.length; i++) {
                 cumulative += weights[i];
                 if (rand <= cumulative) return i;
             }
-            return weights.length - 1; // Fallback
+            return weights.length - 1;
         }
 
         function showPrepareOverlay(callback) {
-            const prepareDuration = 25000; // 25 seconds in milliseconds
+            const prepareDuration = 25000;
             let remainingSeconds = Math.round(prepareDuration / 1000);
             let overlay = document.getElementById('overlay');
-
-            // Initially show overlay in large mode
             overlay.className = 'overlay-large';
             overlay.innerHTML = `<br>Prepare<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
             overlay.style.display = 'block';
-
-            // After 1 second, switch to normal size
             sizeTimeout = setTimeout(() => {
                 overlay.className = 'overlay-normal';
             }, 1000);
-
-            // Start countdown
             if (countdownInterval) clearInterval(countdownInterval);
             countdownInterval = setInterval(function() {
                 remainingSeconds--;
@@ -345,8 +398,6 @@
                     overlay.innerHTML = `Prepare<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                 }
             }, 1000);
-
-            // After prepare time, proceed to the main overlay cycle
             overlayTimeout = setTimeout(() => {
                 if (countdownInterval) clearInterval(countdownInterval);
                 callback();
@@ -354,12 +405,9 @@
         }
 
         function startOverlay() {
-            // Clear any existing intervals and timeouts
             if (countdownInterval) clearInterval(countdownInterval);
             if (overlayTimeout) clearTimeout(overlayTimeout);
             if (sizeTimeout) clearTimeout(sizeTimeout);
-
-            // Get user inputs
             let embedCode = document.getElementById('embed-code').value;
             let minDuration = parseInt(document.getElementById('min-duration').value);
             let maxDuration = parseInt(document.getElementById('max-duration').value);
@@ -369,23 +417,16 @@
             let fastLikelihood = parseInt(document.getElementById('fast-likelihood').value);
             let breakLikelihood = parseInt(document.getElementById('break-likelihood').value);
             let weights = [slowLikelihood, fastLikelihood, breakLikelihood];
-
-            // Validate durations
             if (minDuration > maxDuration) {
-                [minDuration, maxDuration] = [maxDuration, minDuration]; // Swap if min > max
+                [minDuration, maxDuration] = [maxDuration, minDuration];
             }
-
-            // Save embed code to sessionStorage
             saveEmbedCode(embedCode);
-
-            // Parse embed code and modify iframe attributes
             let tempDiv = document.createElement('div');
             tempDiv.innerHTML = embedCode;
             let iframe = tempDiv.querySelector('iframe');
             if (iframe) {
                 iframe.setAttribute('width', '100%');
                 iframe.setAttribute('height', '100%');
-                // Ensure allowfullscreen attribute is present for full-screen support
                 if (iframe.hasAttribute('allowfullscreen')) {
                     iframe.removeAttribute('allowfullscreen', '');
                 }
@@ -393,19 +434,12 @@
                 alert('Please provide a valid iframe embed code.');
                 return;
             }
-
-            // Embed modified iframe and overlay
             document.getElementById('video-container').innerHTML = iframe.outerHTML + '<div id="overlay" class="text-white text-center"></div>';
-
-            // Hide UI and show back and fullscreen buttons
             document.getElementById('ui-container').classList.add('hidden');
             document.getElementById('back-button').classList.remove('hidden');
             document.getElementById('fullscreen-button').classList.remove('hidden');
-
-            // Start with prepare overlay, then proceed to main overlay cycle
             showPrepareOverlay(showNextOverlay);
 
-            // Main overlay cycle
             function showNextOverlay() {
                 if (instructions.length > 0) {
                     let randomIndex = weightedRandomChoice(weights);
@@ -414,20 +448,14 @@
                     let duration = getRandomDuration(minDuration, maxDuration);
                     let overlay = document.getElementById('overlay');
                     let remainingSeconds = Math.round(duration / 1000);
-
-                    // Initially show overlay in large mode
                     overlay.className = 'overlay-large';
                     overlay.innerHTML = strokeCount > 0
                         ? `<br>${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`
                         : `<br>${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
                     overlay.style.display = 'block';
-
-                    // After 1 second, switch to normal size
                     sizeTimeout = setTimeout(() => {
                         overlay.className = 'overlay-normal';
                     }, 1000);
-
-                    // Start countdown
                     if (countdownInterval) clearInterval(countdownInterval);
                     countdownInterval = setInterval(function() {
                         remainingSeconds--;
@@ -437,24 +465,20 @@
                                 : `${instruction}<br><span class="text-pink-400 seconds">${remainingSeconds}</span>`;
                         }
                     }, 1000);
-
-                    // Schedule next overlay immediately after this one ends
                     overlayTimeout = setTimeout(showNextOverlay, duration);
                 }
             }
         }
 
         function showUI() {
-            // Clear intervals and reset UI
             if (countdownInterval) clearInterval(countdownInterval);
             if (overlayTimeout) clearTimeout(overlayTimeout);
             if (sizeTimeout) clearTimeout(sizeTimeout);
             document.getElementById('ui-container').classList.remove('hidden');
             document.getElementById('back-button').classList.add('hidden');
             document.getElementById('fullscreen-button').classList.add('hidden');
-            document.getElementById('fullscreen-button').textContent = 'Full Screen'; // Reset button text
+            document.getElementById('fullscreen-button').textContent = 'Full Screen';
             document.getElementById('video-container').innerHTML = '';
-            // Exit full-screen if active
             if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
