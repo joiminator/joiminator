@@ -289,9 +289,6 @@
                 shareUrl += `?embed=${encodedEmbed}`;
             }
 
-            // Use static shareUrl for now
-            shareUrl = 'https://joiminator.github.io/joiminator/';
-
             // Update AddToAny share URL and title
             const shareToolbox = document.getElementById('share-toolbox');
             shareToolbox.setAttribute('data-a2a-url', shareUrl);
@@ -320,12 +317,23 @@
 
         // Function to convert Pornhub URL to iframe embed code
         function convertPornhubUrlToIframe(url) {
-            // Match Pornhub URLs with viewkey (e.g., https://www.pornhub.com/view_video.php?viewkey=6813d1fcb6624)
             const pornhubRegex = /pornhub\.com\/view_video\.php\?viewkey=([a-zA-Z0-9]+)/;
             const match = url.match(pornhubRegex);
             if (match && match[1]) {
                 const viewkey = match[1];
                 return `<iframe src="https://www.pornhub.com/embed/${viewkey}" frameborder="0" width="560" height="315" scrolling="no" allowfullscreen></iframe>`;
+            }
+            return null;
+        }
+
+        // Function to convert YouTube URL to iframe embed code
+        function convertYouTubeUrlToIframe(url) {
+            // Match YouTube URLs (e.g., https://www.youtube.com/watch?v=ja2dGXXmFV4)
+            const youtubeRegex = /youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
+            const match = url.match(youtubeRegex);
+            if (match && match[1]) {
+                const videoId = match[1];
+                return `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" width="560" height="315" allowfullscreen></iframe>`;
             }
             return null;
         }
@@ -343,6 +351,14 @@
             // Check if the input is a Pornhub URL
             if (input.includes('pornhub.com/view_video.php?viewkey=')) {
                 const iframe = convertPornhubUrlToIframe(input);
+                if (iframe) {
+                    return iframe;
+                }
+            }
+
+            // Check if the input is a YouTube URL
+            if (input.includes('youtube.com/watch?v=')) {
+                const iframe = convertYouTubeUrlToIframe(input);
                 if (iframe) {
                     return iframe;
                 }
@@ -458,7 +474,7 @@
             // Process the input (URL or iframe)
             let embedCode = processVideoInput(input);
             if (!embedCode) {
-                alert('Please provide a valid iframe embed code or a supported video URL (e.g., from Pornhub).');
+                alert('Please provide a valid iframe embed code or a supported video URL (e.g., from Pornhub or YouTube).');
                 return;
             }
 
