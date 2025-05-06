@@ -175,8 +175,8 @@
         <p class="text-lg text-purple-300 mb-6 text-center">Unleash your desires with custom jerk off instructions overlaid on ANY video. Set the pace, feel the rush!</p>
 
         <div class="bg-gray-900 p-6 rounded-lg shadow-lg shadow-pink-500/50">
-            <label for="embed-code" class="block text-lg font-semibold text-pink-400 mb-2">Video Embed Code (iframe):</label>
-            <textarea id="embed-code" rows="3" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Paste your iframe embed code here (e.g., from YouTube)"></textarea>
+            <label for="embed-code" class="block text-lg font-semibold text-pink-400 mb-2">Video Embed Code or URL:</label>
+            <textarea id="embed-code" rows="3" class="w-full bg-gray-800 text-white p-3 rounded neon-border focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="Paste your iframe embed code or video URL here (e.g., from Pornhub or YouTube)"></textarea>
 
             <div class="mt-4">
                 <label class="block text-lg font-semibold text-pink-400 mb-2">Duration (seconds per round):</label>
@@ -318,6 +318,40 @@
             updateShareUrl();
         });
 
+        // Function to convert Pornhub URL to iframe embed code
+        function convertPornhubUrlToIframe(url) {
+            // Match Pornhub URLs with viewkey (e.g., https://www.pornhub.com/view_video.php?viewkey=6813d1fcb6624)
+            const pornhubRegex = /pornhub\.com\/view_video\.php\?viewkey=([a-zA-Z0-9]+)/;
+            const match = url.match(pornhubRegex);
+            if (match && match[1]) {
+                const viewkey = match[1];
+                return `<iframe src="https://www.pornhub.com/embed/${viewkey}" frameborder="0" width="560" height="315" scrolling="no" allowfullscreen></iframe>`;
+            }
+            return null;
+        }
+
+        // Function to validate and process input (URL or iframe)
+        function processVideoInput(input) {
+            // Trim whitespace
+            input = input.trim();
+
+            // Check if the input is an iframe
+            if (input.startsWith('<iframe')) {
+                return input;
+            }
+
+            // Check if the input is a Pornhub URL
+            if (input.includes('pornhub.com/view_video.php?viewkey=')) {
+                const iframe = convertPornhubUrlToIframe(input);
+                if (iframe) {
+                    return iframe;
+                }
+            }
+
+            // If not recognized, return null
+            return null;
+        }
+
         function toggleFullScreen() {
             const videoContainer = document.getElementById('video-container');
             if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
@@ -408,7 +442,7 @@
             if (countdownInterval) clearInterval(countdownInterval);
             if (overlayTimeout) clearTimeout(overlayTimeout);
             if (sizeTimeout) clearTimeout(sizeTimeout);
-            let embedCode = document.getElementById('embed-code').value;
+            let input = document.getElementById('embed-code').value;
             let minDuration = parseInt(document.getElementById('min-duration').value);
             let maxDuration = parseInt(document.getElementById('max-duration').value);
             let minStrokes = parseInt(document.getElementById('min-strokes').value);
@@ -420,7 +454,18 @@
             if (minDuration > maxDuration) {
                 [minDuration, maxDuration] = [maxDuration, minDuration];
             }
-            saveEmbedCode(embedCode);
+
+            // Process the input (URL or iframe)
+            let embedCode = processVideoInput(input);
+            if (!embedCode) {
+                alert('Please provide a valid iframe embed code or a supported video URL (e.g., from Pornhub).');
+                return;
+            }
+
+            // Save the original input to sessionStorage (whether URL or iframe)
+            saveEmbedCode(input);
+
+            // Parse embed code and modify iframe attributes
             let tempDiv = document.createElement('div');
             tempDiv.innerHTML = embedCode;
             let iframe = tempDiv.querySelector('iframe');
@@ -431,9 +476,11 @@
                     iframe.removeAttribute('allowfullscreen', '');
                 }
             } else {
-                alert('Please provide a valid iframe embed code.');
+                alert('Failed to process the video input. Please try again.');
                 return;
             }
+
+            // Embed modified iframe and overlay
             document.getElementById('video-container').innerHTML = iframe.outerHTML + '<div id="overlay" class="text-white text-center"></div>';
             document.getElementById('ui-container').classList.add('hidden');
             document.getElementById('back-button').classList.remove('hidden');
