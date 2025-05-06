@@ -433,7 +433,7 @@
 
         function showPrepareOverlay(callback) {
             const prepareDuration = 25000;
-            let remainingSeconds = Math.round((duration / 1000) / 5) * 5;
+            let remainingSeconds = Math.round(prepareDuration / 1000);
             let overlay = document.getElementById('overlay');
             overlay.className = 'overlay-large';
             overlay.innerHTML = `<br>Prepare<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`;
@@ -510,7 +510,7 @@
                     let strokeCount = getStrokeCount(instruction, minStrokes, maxStrokes);
                     let duration = getRandomDuration(minDuration, maxDuration);
                     let overlay = document.getElementById('overlay');
-                    let remainingSeconds = Math.round(duration / 1000);
+                    let remainingSeconds = Math.round((duration / 1000) / 5) * 5;
                     overlay.className = 'overlay-large';
                     overlay.innerHTML = strokeCount > 0
                         ? `<br>${strokeCount} strokes<br><span class="text-pink-400 seconds">${remainingSeconds} seconds</span>`
